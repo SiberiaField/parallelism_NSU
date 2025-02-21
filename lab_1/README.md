@@ -3,15 +3,15 @@ This program calculates the sum of 10 million sinusoidal values ranging from 0 t
 
 You can also select the value type: float or double.
 ## Usage
-1. Run the command bellow to build the programm
+1. Run the command bellow to build the program
 ```
 make USE_FLOAT=_
 ```
 Replace `_` with `ON` or `OFF` to choose float or double respectively.
 
-You can also run `make` without arguments. Is's the same as  `make USE_FLOAT=OFF` and `make USE_FLOAT=`.
+You can also run `make` without arguments. It's the same as  `make USE_FLOAT=OFF` and `make USE_FLOAT=`.
 
-2. Use `./main` to launch the prog
+2. Use `./main` to launch the program
 
 After the program is completed you should get a similiar results
 
@@ -21,4 +21,4 @@ After the program is completed you should get a similiar results
 | TIME 0.61224 sec | TIME 0.632357 sec |
 | TYPE float | TYPE double |
 
-3. Run `make clean` if you want to delete programm and its objects files.
+3. Run `make clean` if you want to delete program and its objects files.
