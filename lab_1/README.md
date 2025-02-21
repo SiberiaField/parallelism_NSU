@@ -13,7 +13,7 @@ Replace `_` with `ON` or `OFF` to choose float or double respectively.
 ```
 cmake --build build
 ```
-3. Use `./build/main` to launch the prog
+3. Use `./build/main` to launch the program
 
 After the program is completed you should get a similiar results
 
