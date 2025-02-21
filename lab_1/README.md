@@ -19,6 +19,6 @@ After the program is completed you should get a similiar results
 
 | For float  | For double |
 |:-------------:|:-------------:|
-| SUM -1.6573e+07 | SUM 80.7166 |
-| TIME 0.491736 sec | TIME 0.501811 sec |
+| SUM 807.559 | SUM 807.754 |
+| TIME 0.606952 sec | TIME 0.601801 sec |
 | TYPE float | TYPE double |

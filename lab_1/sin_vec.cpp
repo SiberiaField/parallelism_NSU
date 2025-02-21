@@ -12,7 +12,7 @@ void Sin_Vec::fill(){
 
 Sin_Vec::Sin_Vec(){
     data.resize(100000000);
-    step = 6.28e-8;
+    step = 6.28e-7;
     fill();
 }
 
