@@ -1,0 +1,7 @@
+*.o
+*.a
+*.csv
+task_1/matrix_mul
+task_2/integrate
+task_3/main_for
+task_3/main_parallel

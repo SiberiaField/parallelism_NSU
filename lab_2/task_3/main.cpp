@@ -50,6 +50,7 @@ int main(int argc, char** argv){
 
     omp_set_num_threads(1);
     
+    std::cout << "Start solving via one thread\n";
     T = solve(&a, &b, &x, t, eps);
 
     omp_set_num_threads(nthreads);
@@ -60,6 +61,7 @@ int main(int argc, char** argv){
         Tp = solve(&a, &b, &x, t, eps);
         avg_Tp += Tp;
         avg_Sp += T / Tp;
+        std::cout << " Iter " << i << " complete\n";
     }
     std::cout << "End main for\n";
 

@@ -1,9 +1,10 @@
 #include "solve_base.hpp"
 
+
 void sub(matrix* a, matrix* b){
     #pragma omp parallel
     { 
-        #pragma omp scheduler(dymanic, 100) for 
+        #pragma omp for schedule(static, 100)
         for(int i = 0; i < a->lines; i++){
             for(int j = 0; j < a->columns; j++){
                 a->data[i * a->columns + j] -= b->data[i * b->columns + j];
@@ -16,7 +17,7 @@ void sub(matrix* a, matrix* b){
 void matrix_mul(matrix* a, matrix* b, matrix* res){
     #pragma omp parallel
     { 
-        #pragma omp scheduler(dymanic, 100) for
+        #pragma omp for schedule(static, 100)
         for(int i = 0; i < a->lines; i++){
             for(int j = 0; j < b->columns; j++){
                 res->data[i * res->columns + j] = 0;
@@ -32,7 +33,7 @@ void matrix_mul(matrix* a, matrix* b, matrix* res){
 void scalar_mul(matrix* a, double scalar){
     #pragma omp parallel
     { 
-        #pragma omp scheduler(dymanic, 100) for
+        #pragma omp for schedule(static, 100)
         for(int i = 0; i < a->lines; i++){
             for(int j = 0; j < a->columns; j++){
                 a->data[i * a->columns + j] *= scalar;
@@ -48,7 +49,7 @@ double standart_deviation(matrix* a){
     #pragma omp parallel 
     {
         double value;
-        #pragma omp scheduler(dymanic, 100) for reduction(+:deviation) 
+        #pragma omp for schedule(static, 100) reduction(+:deviation) 
         for(int i = 0; i < a->lines; i++){
             for(int j = 0; j < a->columns; j++){
                 value = a->data[i * a->columns + j];
