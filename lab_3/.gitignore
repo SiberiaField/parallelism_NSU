@@ -1,3 +1,6 @@
 task_1/matrix_mul
+task_1/res.csv
+task_2/main
+task_2/test
+task_2/logs.txt
 *.o
-*.csv
