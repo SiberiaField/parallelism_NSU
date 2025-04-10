@@ -1,1 +1,1 @@
-# parallelism_NSU
+# Parallelism using std::thread
