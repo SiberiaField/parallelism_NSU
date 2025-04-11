@@ -45,6 +45,7 @@ public:
                 tasks.pop();
             }
             lock.unlock();
+            cv.notify_all();
         }
     }
 
@@ -77,14 +78,11 @@ public:
 
         while(!result_ready){
             lock.lock();
-            if(results.find(res_id) != results.end()){
-                res = results[res_id];
-                results.erase(res_id);
-                result_ready = true;
-            }
+            cv.wait(lock, [this, res_id] { return results.find(res_id) != results.end(); });
+            res = results[res_id];
+            results.erase(res_id);
+            result_ready = true;
             lock.unlock();
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
         return res;
