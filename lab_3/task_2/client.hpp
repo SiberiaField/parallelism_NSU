@@ -72,7 +72,7 @@ template<class T> std::mutex client<T>::file_mut;
 
 template<class T> inline void client<T>::open_log_file(){
     log_file.open("logs.txt", std::ios::out);
-    log_file << std::hexfloat;
+    log_file << std::fixed << std::setprecision(19);
 }
 
 

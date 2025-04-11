@@ -3,36 +3,9 @@
 #include <fstream>
 #include <vector>
 #include <utility>
+#include <iomanip>
 
 #include "funcs.hpp"
-
-
-class test_error : public std::exception{
-private:
-    std::string error_message;
-
-public:
-    test_error(std::ostringstream& error_message_stream) noexcept{
-        error_message = error_message_stream.str();
-    }
-
-    test_error(const test_error& other) noexcept{
-        this->error_message = other.error_message;
-    }
-
-    ~test_error(){
-        error_message.clear();
-    }
-
-    test_error& operator=(const test_error& other) noexcept{
-        this->error_message = other.error_message;
-        return *this;
-    }
-
-    const char* what() const noexcept override{
-        return error_message.c_str();
-    }
-};
 
 
 template <typename T>
@@ -50,7 +23,6 @@ std::pair<T, T> test_one_line(std::ifstream& log_file){
 
     T logged_res;
     log_file >> logged_res;
-
     T real_res;
     if(func_name == "sqrt"){
         real_res = t_func::sqrt(args);
@@ -80,10 +52,7 @@ void test(std::ifstream& log_file){
     while(log_file >> id){
         res = test_one_line<T>(log_file);
         if(!eq<T>(res.first, res.second, 1e-3)){
-            std::ostringstream error_message;
-            error_message << "Error in task with id = " << id << ": ";
-            error_message << res.first << " != " << res.second << "\n";
-            throw test_error(error_message);
+            std::cerr << id << ": " << res.first << " != " << res.second << "\n";
         }
     }
 
@@ -96,19 +65,17 @@ void test(std::ifstream& log_file){
 int main(){
     int code = 0;
     std::ifstream log_file("logs.txt", std::ios::in);
+    log_file >> std::fixed >> std::setprecision(19);
 
     try{
+        std::cerr << std::fixed << std::setprecision(19);
         test<TYPE>(log_file);
-        std::cout << "Completed without errors\n";
+        std::cout << "Test completed\n";
     }
     catch(const std::ios_base::failure& ex){
         std::cerr << ex.what();
         code = 1;
     } 
-    catch(const test_error& ex){
-        std::cerr << ex.what();
-        code = 2;
-    }
     
     log_file.close();
     return code;

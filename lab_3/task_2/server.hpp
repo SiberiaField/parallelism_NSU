@@ -73,17 +73,13 @@ public:
 
     T request_result(int res_id){
         std::unique_lock<std::mutex> lock(mut, std::defer_lock);
-        bool result_ready = false;
         T res;
 
-        while(!result_ready){
-            lock.lock();
-            cv.wait(lock, [this, res_id] { return results.find(res_id) != results.end(); });
-            res = results[res_id];
-            results.erase(res_id);
-            result_ready = true;
-            lock.unlock();
-        }
+        lock.lock();
+        cv.wait(lock, [this, res_id] { return results.find(res_id) != results.end(); });
+        res = results[res_id];
+        results.erase(res_id);
+        lock.unlock();
 
         return res;
     }
