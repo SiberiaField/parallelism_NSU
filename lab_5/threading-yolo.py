@@ -1,5 +1,6 @@
 from threading import Thread, Lock
 from queue import SimpleQueue, PriorityQueue, Empty
+from timeit import default_timer as timer
 from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from typing import Any
@@ -14,6 +15,7 @@ NUM_OF_THREADS = 12
 model = YOLO('yolov8s-pose')
 res_queue = PriorityQueue()
 predict_lock = Lock()
+end_of_video = False
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
@@ -35,12 +37,15 @@ class InferThread(Thread):
         self.frames_queue = SimpleQueue()
 
     def run(self):
-        global res_queue
+        global res_queue, end_of_video
         while True:
             try:
-                frame_id, frame = self.frames_queue.get(timeout=5)
+                frame_id, frame = self.frames_queue.get(False)
             except Empty:
-                break
+                if end_of_video:
+                    break
+                else:
+                    continue
             res = self.predict(frame)
             res_queue.put(PrioritizedItem(priority=frame_id, item=res), False)
 
@@ -74,8 +79,8 @@ def join_threads(threads: list[InferThread]):
 
 class OutputVideo:
     def __init__(self, output_video_name: str):
-        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        self.__video_writer__ = cv2.VideoWriter(output_video_name + '.avi', fourcc, 30, (640,  480), isColor=True)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self.__video_writer__ = cv2.VideoWriter(output_video_name + '.mp4', fourcc, 30, (640,  480), isColor=True)
 
     def __del__(self):
         self.__video_writer__.release()
@@ -86,25 +91,32 @@ class OutputVideo:
 
 def save_video_from_threads(output_video_name: str):
     output_video = OutputVideo(output_video_name)
+    frame_counter = 0
     while True:
         try:
             res = res_queue.get(False)
         except Empty:
             break
+        frame_counter += 1
         output_video.write(res.item)
+    print(f'saved {frame_counter} frames')
 
 
 def proceed_with_single_thread(input_video_path: str, output_video_name: str):
+    print("predicting and saving...")
+    start = timer()
     output_video = OutputVideo(output_video_name)
-    results_gen = model.predict(input_video_path, True)
+    results_gen = model.predict(input_video_path, True, verbose=False)
     for result in results_gen:
         output_video.write(result.plot())
+    end = timer()
+    print(f"\nSpeed: {end - start}s")
 
 
 def parse_args():
     parser = ArgumentParser(description="Use threads to speed up yolov8s-pose inference on CPU")
     parser.add_argument('input_video_path', type=str, help='Path to input video')
-    parser.add_argument('--multithreading', type=bool, help='Use multithreading for speed up or not use', default=True)
+    parser.add_argument('--multithreading', type=bool, help='Use multithreading for speed up or not use', default=False)
     parser.add_argument('--output_video_name', type=str, help='Name of output video', default='out')
     return parser.parse_args()
 
@@ -126,6 +138,7 @@ def main():
 
     thread_id = 0
     frame_id = 0
+    start = timer()
     while True:
         success, frame = cap.read()
         if success:
@@ -135,12 +148,19 @@ def main():
             thread_id %= NUM_OF_THREADS
         else:
             break
+    print(f'read {frame_id} frames')
+    global end_of_video
+    end_of_video = True
     cap.release()
 
     print('waiting for threads...')
     join_threads(threads)
+
     print('saving video...')
     save_video_from_threads(args.output_video_name)
+    end = timer()
+
+    print(f"\nSpeed: {end - start}s")
 
 
 if __name__ == '__main__':
