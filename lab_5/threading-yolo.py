@@ -1,4 +1,4 @@
-from threading import Thread, Lock
+from threading import Thread
 from queue import SimpleQueue, PriorityQueue, Empty
 from timeit import default_timer as timer
 from argparse import ArgumentParser
@@ -11,10 +11,10 @@ from cv2.typing import MatLike
 import cv2
 
 
+OUTPUT_SHAPE = (640, 480)
+YOLO_IMGSZ = (OUTPUT_SHAPE[1], OUTPUT_SHAPE[0])
 NUM_OF_THREADS = 12
-model = YOLO('yolov8s-pose')
 res_queue = PriorityQueue()
-predict_lock = Lock()
 end_of_video = False
 
 logger = logging.getLogger(__name__)
@@ -34,29 +34,29 @@ class PrioritizedItem:
 class InferThread(Thread):
     def __init__(self, **thread_configuration):
         Thread.__init__(self, **thread_configuration)
-        self.frames_queue = SimpleQueue()
+        self.__frames_queue__ = SimpleQueue()
+        self.__model__ = YOLO('yolov8s-pose')
 
     def run(self):
         global res_queue, end_of_video
         while True:
             try:
-                frame_id, frame = self.frames_queue.get(False)
+                frame_id, frame = self.__frames_queue__.get(False)
             except Empty:
                 if end_of_video:
                     break
                 else:
                     continue
-            res = self.predict(frame)
+            resized_frame = cv2.resize(frame, OUTPUT_SHAPE, interpolation=cv2.INTER_LINEAR)
+            res = self.predict(resized_frame)
             res_queue.put(PrioritizedItem(priority=frame_id, item=res), False)
 
     def predict(self, frame: MatLike) -> MatLike:
-        global predict_lock
-        with predict_lock:
-            pred = model.predict(frame, verbose=False)
+        pred = self.__model__.predict(frame, verbose=False, imgsz=YOLO_IMGSZ, device='cpu')
         return pred[0].plot()
 
     def put_frame(self, frame_id: int, frame: MatLike):
-        self.frames_queue.put((frame_id, frame), False)
+        self.__frames_queue__.put((frame_id, frame), False)
 
 
 def init_threads(num_of_threads: int) -> list[InferThread]:
@@ -80,7 +80,7 @@ def join_threads(threads: list[InferThread]):
 class OutputVideo:
     def __init__(self, output_video_name: str):
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        self.__video_writer__ = cv2.VideoWriter(output_video_name + '.mp4', fourcc, 30, (640,  480), isColor=True)
+        self.__video_writer__ = cv2.VideoWriter(output_video_name + '.mp4', fourcc, 30.0, OUTPUT_SHAPE, isColor=True)
 
     def __del__(self):
         self.__video_writer__.release()
@@ -102,17 +102,6 @@ def save_video_from_threads(output_video_name: str):
     print(f'saved {frame_counter} frames')
 
 
-def proceed_with_single_thread(input_video_path: str, output_video_name: str):
-    print("predicting and saving...")
-    start = timer()
-    output_video = OutputVideo(output_video_name)
-    results_gen = model.predict(input_video_path, True, verbose=False)
-    for result in results_gen:
-        output_video.write(result.plot())
-    end = timer()
-    print(f"\nSpeed: {end - start}s")
-
-
 def parse_args():
     parser = ArgumentParser(description="Use threads to speed up yolov8s-pose inference on CPU")
     parser.add_argument('input_video_path', type=str, help='Path to input video')
@@ -124,9 +113,9 @@ def parse_args():
 def main():
     args = parse_args()
 
+    global NUM_OF_THREADS
     if args.multithreading is False:
-        proceed_with_single_thread(args.input_video_path, args.output_video_name)
-        exit(0)
+        NUM_OF_THREADS = 1
 
     cap = cv2.VideoCapture(args.input_video_path)
     if not cap.isOpened():
