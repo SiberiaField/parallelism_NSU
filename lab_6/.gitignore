@@ -1,0 +1,6 @@
+build/
+*.txt
+*.nsys-rep
+*.sqlite
+*.csv
+main_*
