@@ -1,6 +1,6 @@
 CC = pgc++
 DEVICE = gpu
-CXXFLAGS = -acc=$(DEVICE) -fast
+CXXFLAGS = -acc=$(DEVICE) -fast -Wall
 
 all: main_$(DEVICE)
 
@@ -8,7 +8,7 @@ main_$(DEVICE): build/main_$(DEVICE).o build/matrices_$(DEVICE).o build/solve_$(
 	$(CC) $(CXXFLAGS) -o $@ $^ -lboost_program_options 
 
 build/main_$(DEVICE).o: main.cpp
-	$(CC) -c $(CXXFLAGS) -o $@ $^
+	$(CC) -c $(CXXFLAGS) -Minfo=accel -o $@ $^
 
 build/matrices_$(DEVICE).o: matrices.cpp
 	$(CC) -c $(CXXFLAGS) -Minfo=accel -o $@ $^
